@@ -1,0 +1,335 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>VALORANT OBS Rank Overlay Generator</title>
+    <style>
+        /* 基本設定 */
+        html, body {
+            margin: 0;
+            padding: 0;
+            font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+        }
+
+        /* 🌐 一般ユーザー用のWebサイトデザイン */
+        .web-bg {
+            background: radial-gradient(circle at top right, #1f2326, #0f1115);
+            color: #ece8e1;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 40px 20px;
+            box-sizing: border-box;
+        }
+
+        .container {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 30px;
+            max-width: 1000px;
+            width: 100%;
+            background: rgba(22, 26, 33, 0.8);
+            border: 1px solid #ff4655; /* ヴァロラントレッド */
+            border-radius: 12px;
+            padding: 40px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.5);
+            backdrop-filter: blur(10px);
+            margin-bottom: 30px;
+        }
+
+        .creator-panel {
+            flex: 1;
+            min-width: 300px;
+        }
+
+        .preview-panel {
+            flex: 1;
+            min-width: 300px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            background: #101418;
+            border: 2px dashed #333;
+            border-radius: 8px;
+            position: relative;
+            padding: 40px 20px;
+        }
+
+        .preview-label {
+            position: absolute;
+            top: 10px;
+            left: 10px;
+            font-size: 12px;
+            color: #767676;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        h1 {
+            color: #ff4655;
+            margin-top: 0;
+            font-size: 28px;
+            letter-spacing: 1px;
+        }
+
+        /* 説明用パネル（新しく追加） */
+        .info-panel {
+            max-width: 1000px;
+            width: 100%;
+            background: #161a21;
+            border: 1px solid #2f3640;
+            border-radius: 12px;
+            padding: 30px;
+            box-sizing: border-box;
+        }
+
+        .info-panel h3 {
+            color: #ff4655;
+            margin-top: 0;
+            border-bottom: 1px solid #2f3640;
+            padding-bottom: 10px;
+        }
+
+        .info-panel ol {
+            padding-left: 20px;
+            color: #8b929a;
+            line-height: 1.8;
+        }
+
+        .info-panel strong {
+            color: #fff;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 8px;
+            font-size: 14px;
+            color: #8b929a;
+        }
+
+        input[type="text"], input[type="color"] {
+            width: 100%;
+            padding: 12px;
+            background: #1a1f25;
+            border: 1px solid #333;
+            border-radius: 6px;
+            color: white;
+            font-size: 16px;
+            box-sizing: border-box;
+        }
+        input[type="text"]:focus {
+            border-color: #ff4655;
+            outline: none;
+        }
+
+        .result-url-box {
+            margin-top: 30px;
+            background: #0f1115;
+            padding: 15px;
+            border-radius: 6px;
+            border-left: 4px solid #ff4655;
+        }
+
+        .url-text {
+            word-break: break-all;
+            font-family: monospace;
+            font-size: 14px;
+            color: #00ffcc;
+        }
+
+        .btn {
+            background: #ff4655;
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            font-size: 16px;
+            font-weight: bold;
+            border-radius: 4px;
+            cursor: pointer;
+            width: 100%;
+            text-transform: uppercase;
+        }
+        .btn:hover { background: #e53e4b; }
+
+        /* 🎥 OBSに映る配信用トラッカーのデザイン */
+        .obs-mode {
+            background: transparent !important;
+        }
+
+        .tracker-badge {
+            display: inline-flex;
+            align-items: center;
+            background: rgba(15, 17, 21, 0.85);
+            border: 2px solid #ff4655;
+            padding: 10px 20px;
+            border-radius: 50px;
+            box-shadow: 0 0 15px rgba(255, 70, 85, 0.3);
+            backdrop-filter: blur(5px);
+        }
+
+        .rank-icon {
+            width: 40px;
+            height: 40px;
+            object-fit: contain;
+        }
+
+        .rank-text-container {
+            display: flex;
+            flex-direction: column;
+            margin-left: 12px;
+        }
+
+        .rank-title {
+            font-size: 20px;
+            font-weight: 900;
+            letter-spacing: 0.5px;
+            text-shadow: 0 2px 4px rgba(0,0,0,0.8);
+            line-height: 1.1;
+        }
+
+        .rank-rr-value {
+            font-size: 14px;
+            font-weight: bold;
+            color: #00ffcc;
+            text-shadow: 0 0 8px rgba(0, 255, 204, 0.5);
+            margin-top: 2px;
+        }
+    </style>
+</head>
+<body>
+
+    <div id="web-interface" class="web-bg">
+        <div class="container">
+            <div class="creator-panel">
+                <h1>VALORANT OVERLAY</h1>
+                <p style="color: #8b929a; font-size: 14px; margin-bottom: 30px;">OBS用のカスタムランクトラッカーURLを生成します。</p>
+                
+                <div class="form-group">
+                    <label>Riot ID (ゲーム内の名前)</label>
+                    <input type="text" id="input-name" value="みかんあいすtwitch" placeholder="MikanIce">
+                </div>
+                <div class="form-group">
+                    <label>タグ (#より後ろの英数字)</label>
+                    <input type="text" id="input-tag" value="RWG" placeholder="JP1">
+                </div>
+                <div class="form-group">
+                    <label>テーマカラー（枠線）</label>
+                    <input type="color" id="input-color" value="#ff4655">
+                </div>
+
+                <div class="result-url-box">
+                    <label>OBSに貼り付けるURL:</label>
+                    <div id="generated-url" class="url-text">生成中...</div>
+                </div>
+                <button class="btn" style="margin-top: 15px;" onclick="copyURL()">URLをコピー</button>
+            </div>
+
+            <div class="preview-panel">
+                <div class="preview-label">OBS Preview (イメージ)</div>
+                <div id="preview-badge" class="tracker-badge">
+                    <img class="rank-icon" id="preview-img" src="https://media.valorant-api.com/competitivetiers/036d1320-4de4-10a1-198d-76912a425e18/9/smallicon.png" alt="rank">
+                    <div class="rank-text-container">
+                        <span class="rank-title" id="preview-name">BRONZE 1</span>
+                        <span class="rank-rr-value" id="preview-rr">25 RR</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="info-panel">
+            <h3>⚙️ OBSへの設定方法（使い方）</h3>
+            <ol>
+                <li>上のフォームにあなたの<strong>「Riot ID」</strong>と<strong>「タグ」</strong>を入力し、お好みの枠線の色を選びます。</li>
+                <li>自動生成されたURLの右下にある<strong>「URLをコピー」</strong>ボタンを押します。</li>
+                <li>配信ソフト（OBS Studio）を開き、ソース一覧の<strong>「＋」ボタンから「ブラウザ」</strong>を追加します。</li>
+                <li>URLの欄に、先ほどコピーしたURLを貼り付けます。</li>
+                <li>サイズを <strong>幅: 350、高さ: 100</strong> に設定すると綺麗に収まります。背景は自動で透明になります。</li>
+                <li><strong>※注意：</strong>VALORANTの戦績が「非公開」になっているとエラーになります。あらかじめTracker.ggなどの外部サイトで戦績が公開されている状態にしてください。</li>
+            </ol>
+        </div>
+    </div>
+
+    <div id="obs-interface" style="display: none; padding: 10px;">
+        <div id="obs-badge" class="tracker-badge">
+            <img class="rank-icon" id="obs-img" src="" style="display:none;">
+            <div class="rank-text-container">
+                <span class="rank-title" id="obs-name">LOADING</span>
+                <span class="rank-rr-value" id="obs-rr">- RR</span>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const urlParams = new URLSearchParams(window.location.search);
+        const nameParam = urlParams.get('name');
+        const tagParam = urlParams.get('tag');
+        const colorParam = urlParams.get('color') || '#ff4655';
+
+        if (nameParam && tagParam) {
+            document.getElementById('web-interface').style.display = 'none';
+            document.getElementById('obs-interface').style.display = 'inline-block';
+            document.body.classList.add('obs-mode');
+            document.getElementById('obs-badge').style.borderColor = '#' + colorParam.replace('#','');
+            
+            fetchRankData(nameParam, tagParam);
+            setInterval(() => { fetchRankData(nameParam, tagParam); }, 120000); // 2分ごとに更新
+        } else {
+            initGenerator();
+        }
+
+        function initGenerator() {
+            const nameInput = document.getElementById('input-name');
+            const tagInput = document.getElementById('input-tag');
+            const colorInput = document.getElementById('input-color');
+
+            function updateGenerator() {
+                const baseUrl = window.location.origin + window.location.pathname;
+                const cleanColor = colorInput.value.replace('#', '');
+                const finalUrl = `${baseUrl}?name=${encodeURIComponent(nameInput.value)}&tag=${encodeURIComponent(tagInput.value)}&color=${cleanColor}`;
+                document.getElementById('generated-url').innerText = finalUrl;
+                document.getElementById('preview-badge').style.borderColor = colorInput.value;
+            }
+
+            nameInput.addEventListener('input', updateGenerator);
+            tagInput.addEventListener('input', updateGenerator);
+            colorInput.addEventListener('input', updateGenerator);
+            updateGenerator();
+        }
+
+        function copyURL() {
+            const url = document.getElementById('generated-url').innerText;
+            navigator.clipboard.writeText(url);
+            alert("OBS用のURLをコピーしました！OBSのブラウザソースに貼り付けてください。");
+        }
+
+        async function fetchRankData(name, tag) {
+            try {
+                const response = await fetch(`/api/get-rank?name=${encodeURIComponent(name)}&tag=${encodeURIComponent(tag)}`);
+                if (!response.ok) throw new Error();
+                const data = await response.json();
+                
+                document.getElementById("obs-name").innerText = data.rank.toUpperCase();
+                document.getElementById("obs-rr").innerText = `${data.rr} RR`;
+                
+                // 💡 サーバーから送られてきた公式ランクアイコンの画像をセットします
+                if (data.icon) {
+                    const imgEl = document.getElementById("obs-img");
+                    imgEl.src = data.icon;
+                    imgEl.style.display = "inline-block";
+                }
+            } catch (e) {
+                document.getElementById("obs-name").innerText = "ERROR";
+                document.getElementById("obs-rr").innerText = "CHECK SETTINGS";
+            }
+        }
+    </script>
+</body>
+</html>
